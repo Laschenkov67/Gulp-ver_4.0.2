@@ -4,6 +4,7 @@ let source_folder = "#src";
 
 let fs = require('fs');
 
+/**Настройка конфига для расположения файлов*/
 let path = {
 	build: {
 		html: project_folder + "/",
@@ -13,6 +14,7 @@ let path = {
 		fonts: project_folder + "/fonts/",
 	},
 	src: {
+		/**Слежение за всеми файлами из папки разработки с исключением фалов с нижним подчеркиванием*/
 		html: [source_folder + "/*.html", "!" + source_folder + "/_*.html"],
 		css: source_folder + "/scss/style.scss",
 		js: source_folder + "/js/script.js",
@@ -27,6 +29,7 @@ let path = {
 	},
 	clean: "./" + project_folder + "/"
 }
+/**end конфиг файлов*/
 
 let { src, dest } = require('gulp'),
 	gulp = require('gulp'),
@@ -49,6 +52,7 @@ let { src, dest } = require('gulp'),
 	fonter = require('gulp-fonter'),
 	newer = require('gulp-newer');
 
+/**Работа с браузером*/
 function browserSync(params) {
 	browsersync.init({
 		server: {
@@ -59,14 +63,16 @@ function browserSync(params) {
 	})
 }
 
+/**Работа с html-файлами */
 function html() {
-	return src(path.src.html)
+	return src(path.src.html) //Возвращаем исходные файлы
 		.pipe(fileinclude())
 		.pipe(webphtml())
-		.pipe(dest(path.build.html))
-		.pipe(browsersync.stream())
+		.pipe(dest(path.build.html)) //Перебрасываем файлы результата
+		.pipe(browsersync.stream())  //Обновить страницу браузера
 }
 
+/**Работа с css и препроцессором scss */
 function css() {
 	return src(path.src.css)
 		.pipe(
@@ -79,8 +85,8 @@ function css() {
 		)
 		.pipe(
 			autoprefixer({
-				overrideBrowserslist: ["last 5 versions"],
-				cascade: true
+				overrideBrowserslist: ["last 5 versions"], //Поддержка браузеров(указано последние 5)
+				cascade: true 							   //стиль написание префиксара
 			})
 		)
 		.pipe(webpcss(
@@ -99,6 +105,8 @@ function css() {
 		.pipe(dest(path.build.css))
 		.pipe(browsersync.stream())
 }
+
+/**Работа с javascript файлами*/
 function js() {
 	return src(path.src.js)
 		.pipe(fileinclude())
@@ -114,6 +122,8 @@ function js() {
 		.pipe(dest(path.build.js))
 		.pipe(browsersync.stream())
 }
+
+/**Работа с изображениями*/
 function images() {
 	return src(path.src.img)
 		.pipe(newer(path.build.img))
@@ -142,6 +152,8 @@ function images() {
 		)
 		.pipe(dest(path.build.img))
 }
+
+/**Работа со шрифтами*/
 function fonts() {
 	src(path.src.fonts)
 		.pipe(ttf2woff())
@@ -150,6 +162,7 @@ function fonts() {
 		.pipe(ttf2woff2())
 		.pipe(dest(path.build.fonts));
 };
+
 gulp.task('otf2ttf', function () {
 	return src([source_folder + '/fonts/*.otf'])
 		.pipe(fonter({
@@ -157,6 +170,7 @@ gulp.task('otf2ttf', function () {
 		}))
 		.pipe(dest(source_folder + '/fonts/'));
 })
+
 gulp.task('svgSprite', function () {
 	return gulp.src([source_folder + '/iconsprite/*.svg'])
 		.pipe(svgSprite({
@@ -170,6 +184,8 @@ gulp.task('svgSprite', function () {
 		))
 		.pipe(dest(path.build.img))
 })
+
+/**Подключение шрифтов к файлу стилей*/
 function fontsStyle(params) {
 	let file_content = fs.readFileSync(source_folder + '/scss/fonts.scss');
 	if (file_content == '') {
@@ -189,18 +205,22 @@ function fontsStyle(params) {
 		})
 	}
 }
-function cb() { }
+
+/**Слежение за файлами*/
 function watchFiles(params) {
 	gulp.watch([path.watch.html], html);
 	gulp.watch([path.watch.css], css);
 	gulp.watch([path.watch.js], js);
 	gulp.watch([path.watch.img], images);
 }
+
+/**Очистка проекта*/
 function clean(params) {
 	return del(path.clean);
 }
+
 let build = gulp.series(clean, gulp.parallel(js, css, html, images, fonts), fontsStyle);
-let watch = gulp.parallel(build, watchFiles, browserSync);
+let watch = gulp.parallel(build, watchFiles, browserSync); 
 
 exports.fontsStyle = fontsStyle;
 exports.fonts = fonts;
